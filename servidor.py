@@ -30,16 +30,21 @@ servidor.bind(("localhost", 5000))
 servidor.listen()
 print("Servidor escuchando en el puerto 5000")
 
-while True:
-    conexion, direccion = servidor.accept()
-    if len(clientes_conectados) < 5:
-        print(f"Cliente conectado: {direccion}")
-        hilo = threading.Thread(
-            target=atender_cliente,
-            args=(conexion, direccion)
-        )
-        hilo.start()
-    else:
-        print(f"direccion: {direccion}, rechazada")
-        conexion.send("Servidor lleno".encode())
-        conexion.close()
+try:
+    while True:
+        conexion, direccion = servidor.accept()
+        if len(clientes_conectados) < 3:
+            conexion.send("OK".encode())
+            print(f"Cliente conectado: {direccion}")
+            hilo = threading.Thread(
+                target=atender_cliente,
+                args=(conexion, direccion),
+                daemon=True
+            )
+            hilo.start()
+        else:
+            print(f"direccion: {direccion}, rechazada")
+            conexion.send("Servidor lleno".encode())
+            conexion.close()
+except KeyboardInterrupt:
+    pass

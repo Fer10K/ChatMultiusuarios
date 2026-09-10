@@ -1,29 +1,59 @@
-import socket, sys, threading
+import socket
+import threading
+import readline
+from colorama import Fore, Style, init
 
-def escuchar(cliente):
-    while True:
+init()
+
+cliente = socket.socket()
+cliente.connect(("localhost", 5000))
+
+direccion = str(cliente.getsockname())
+
+respuesta = cliente.recv(1024).decode()
+
+if respuesta == "Servidor lleno":
+    print(respuesta)
+    cliente.close()
+    exit()
+
+isActive = True
+
+
+def mostrar(mensaje):
+    color = Fore.GREEN if direccion in mensaje else Fore.CYAN
+    print("\r\033[K" + color + mensaje + Style.RESET_ALL)
+
+    if isActive:
+        print(f"{Fore.GREEN}{direccion}: {Style.RESET_ALL}", end="", flush=True)
+
+
+def escuchar():
+    global isActive
+
+    while isActive:
         try:
-            respuesta = cliente.recv(1024).decode()
-            if not respuesta:
+            mensaje = cliente.recv(1024).decode()
+
+            if not mensaje:
                 break
 
-            print(f"{respuesta}")
-        except Exception:
+            mostrar(mensaje)
+
+        except:
             break
 
-cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-cliente.connect(("localhost", 5000))
-hilo_escuchar = threading.Thread(
-    target=escuchar, args=(cliente,)
-)
-hilo_escuchar.start()
 
-if len(sys.argv) > 1:
-    cliente.send(sys.argv[1].encode())
+threading.Thread(target=escuchar, daemon=True).start()
 
 try:
-    while True:
-        nuevo_mensaje = input()
-        cliente.send(nuevo_mensaje.encode())
+    while isActive:
+        mensaje = input(f"{Fore.GREEN}{direccion}: {Style.RESET_ALL}")
+        cliente.send(mensaje.encode())
+
 except KeyboardInterrupt:
+    pass
+
+finally:
+    isActive = False
     cliente.close()
