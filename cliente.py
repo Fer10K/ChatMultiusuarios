@@ -1,6 +1,5 @@
 import socket
 import threading
-import readline
 from colorama import Fore, Style, init
 
 init()
